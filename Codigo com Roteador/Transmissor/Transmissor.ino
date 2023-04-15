@@ -28,7 +28,7 @@ char pass[] = "testesestatico";               // Senha
 //------------------------------------------------------------------------------------
 // Variaveis de Autenticação do Wifi
 //------------------------------------------------------------------------------------
-IPAddress server(192,168,1,10);           // Endereço do Server - Verificar no Roteador ou no inicio da serial 
+IPAddress server(192,168,1,10);           // Endereço do Server - Verificar no Roteador ou no inicio da serial do Receptor
 WiFiClient client;
 
 //------------------------------------------------------------------------------------
@@ -113,12 +113,12 @@ void setup() {
 
   client.connect(server, 80); 
   client.println("Modulo de Leitura Conectado\r"); 
-  Serial.println("Conectado ao Receptor");
+  //Serial.println("Conectado ao Receptor");
 
   client.connect(server, 80); 
   client.println("Inicializando cartao SD\r"); 
   
-  //sdini(); 
+  //sdini(); //Descomente para inicializar a gravação no SD
 
   client.connect(server, 80); 
   client.println("Inicializando e calibrando Celula de carga\r"); 
@@ -142,10 +142,13 @@ void loop() {
                 tele = String((millis() / 1000.0),3) + "," + String(peso, 3) + '\r';
                 Serial.print(tele);
                 Serial.println("N");
-                //writeOnSD(tele);                
+                //writeOnSD(tele);  //Descomente para gravar no sd              
                 client.connect(server, 80); 
                 client.println(tele);   
-                delay(120);
+                delay(120); //HX711 Requer que cada leitura seja realizado a no minimo a cada 100ms
+                //120ms ideal para não ocorrer travamentos durante as leituras sem cartão SD
+                //No caso de utilização do cartão sd verificar a quanto tempo estar realizando as leitura 
+                //E inserir um delay para que as leituras fiquem acima de 100ms
                 
               }
             else  {
