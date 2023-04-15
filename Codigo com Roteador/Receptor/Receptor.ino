@@ -18,8 +18,8 @@ char pass[] = "testesestatico";               // Senha
 
 WiFiServer server(80);
 
-IPAddress ip(192, 168, 1, 10);           // IP 
-IPAddress gateway(192, 168, 1, 254);        // gateway
+IPAddress ip(192, 168, 1, 10);    // IP - configurar de acordo com roteador conectado e inserir no Transmissor 
+IPAddress gateway(192, 168, 1, 254);  // IP padrão do roteador - configurar de acordo com roteador 
 IPAddress subnet(255, 255, 255, 0);        // subnet 
 
 //====================================================================================
