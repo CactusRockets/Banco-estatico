@@ -6,23 +6,34 @@
 // Definindo pinos I/O 
 //------------------------------------------------------------------------------------
 #define       LedBoard   2        
-#define       SWITCH    D3        
+#define       SWITCH     3        
 
 //====================================================================================
 
 //------------------------------------------------------------------------------------
 // Configuração do modulo de Wifi
 //------------------------------------------------------------------------------------
+
+// SSID
+char ssid[] = "teste"; 
+// Senha
+char pass[] = "testesestatico";
+
+/*
 // SSID 
 char ssid[] = "cactus";
 // Senha
 char pass[] = "bancokabum";
+*/
 
 WiFiServer server(80);
 
-IPAddress ip(192, 168, 186, 56);           // IP 
-IPAddress gateway(192, 168, 186, 223);     // gateway
-IPAddress subnet(255, 255, 255, 0);        // subnet 
+// IP - configurar de acordo com roteador conectado e inserir no Transmissor 
+IPAddress ip(192, 168, 1, 2);
+// IP padrão do roteador (gateway) - configurar de acordo com roteador conectado 
+IPAddress gateway(192, 168, 1, 254);
+// subnet
+IPAddress subnet(255, 255, 255, 0);
 
 //====================================================================================
 
@@ -31,7 +42,7 @@ void setup() {
   Serial.println(".");
   Serial.println("Modulo Inicializado"); 
   
-  pinMode(SWITCH, INPUT_PULLUP); 
+  pinMode(SWITCH, INPUT_PULLUP);
   pinMode(LedBoard, OUTPUT);
   digitalWrite(LedBoard, LOW); 
 
@@ -46,6 +57,8 @@ void setup() {
   }
   server.begin();
 
+  delay(5000);
+  
   // Inicia o server
   Serial.println("Connected to wifi");
 
@@ -58,20 +71,20 @@ void setup() {
   Serial.print("Signal: ");   Serial.println(WiFi.RSSI());
   Serial.print("Networks: "); Serial.println(WiFi.scanNetworks());
 
+  delay(2000);
   digitalWrite(LedBoard, HIGH);
 }
 
 void loop() {
 
-  WiFiClient client = server.available();
-  if (!client) {
-    Serial.println("Cliente nao detectado!");
+  WiFiClient cliente = server.available();
+  if (!cliente) {
     return;
   }
-  String request = client.readStringUntil('\r');
+  String request = cliente.readStringUntil('\r');
   Serial.println(request);
   
   digitalWrite(LedBoard, LOW);
-  client.flush();  
+  cliente.flush();  
   digitalWrite(LedBoard, HIGH);
 }

@@ -11,6 +11,8 @@
 #define       DT           D1       // DT HX711
 #define       SCK          D2       // SCK HX711
 
+#define SD_ENABLE true
+
 //------------------------------------------------------------------------------------
 // Declarando Variaveis
 //------------------------------------------------------------------------------------
@@ -22,8 +24,13 @@ String tele;
 //------------------------------------------------------------------------------------
 // Variaveis de Autenticação do Wifi
 //------------------------------------------------------------------------------------
+/*
 char ssid[] = "Sett";                  // SSID 
 char pass[] = "Scts2019LoL";           // Senha
+*/
+
+char ssid[] = "teste";                 // SSID 
+char pass[] = "testesestatico";        // Senha
 
 /*
 char ssid[] = "LabCCOMP";              // SSID 
@@ -34,7 +41,7 @@ char pass[] = "#labccomp#";            // Senha
 // Variaveis de Autenticação do Wifi
 //------------------------------------------------------------------------------------
 // Endereço do Server - Verificar no Roteador ou no inicio da serial 
-IPAddress server(192,168,186,56);
+IPAddress server(192,168,1,2);
 WiFiClient client;
 
 //------------------------------------------------------------------------------------
@@ -43,7 +50,7 @@ WiFiClient client;
 HX711 escala;
 
 // esse valor deve ser alterado para o valor de calibracao obtido com o outro codigo
-const int FATOR_CALIBRACAO = 15000;
+const int FATOR_CALIBRACAO = 23500;
 
 
 //====================================================================================
@@ -98,10 +105,9 @@ void writeOnSD(String str) {
   }
 }
 //====================================================================================
-
 void setup() {
   pinMode(LedBoard, OUTPUT);  
-  digitalWrite(LedBoard, LOW);              
+  digitalWrite(LedBoard, HIGH);              
   Serial.begin(115200);                     
   Serial.println(".");
   Serial.println("Modulo Incializado");
@@ -112,23 +118,36 @@ void setup() {
     Serial.print(".");
     delay(500);
   }
+  
+  delay(10000);
   Serial.println("Connected to wifi");
 
   // Network parameters
-  Serial.print("Status: "); Serial.println(WiFi.status());
-  Serial.print("IP: ");     Serial.println(WiFi.localIP());
-  Serial.print("Subnet: "); Serial.println(WiFi.subnetMask());
-  Serial.print("Gateway: "); Serial.println(WiFi.gatewayIP());
-  Serial.print("SSID: "); Serial.println(WiFi.SSID());
-  Serial.print("Signal: "); Serial.println(WiFi.RSSI());
+  Serial.print("Status: ");
+  Serial.println(WiFi.status());
+  Serial.print("IP: ");
+  Serial.println(WiFi.localIP());
+  Serial.print("Subnet: ");
+  Serial.println(WiFi.subnetMask());
+  Serial.print("Gateway: ");
+  Serial.println(WiFi.gatewayIP());
+  Serial.print("SSID: ");
+  Serial.println(WiFi.SSID());
+  Serial.print("Signal: ");
+  Serial.println(WiFi.RSSI());
 
   client.connect(server, 80); 
   client.println("Modulo de Leitura Conectado\r");
-  
-  // sdini(); 
+  client.connect(server, 80); 
 
-  // client.connect(server, 80); 
-  // client.println("Inicializando e calibrando Celula de carga\r"); 
+  if(SD_ENABLE) {
+    client.println("Inicializando cartao SD\r"); 
+    // Configura cartão SD
+    sdini();
+  }
+
+  client.connect(server, 80); 
+  client.println("Inicializando e calibrando Celula de carga\r"); 
   Serial.println("Inicializando e calibrando Celula de carga");  
 
   // inicializacao e definicao dos pinos DT e SCK dentro do objeto ESCALA
@@ -138,29 +157,39 @@ void setup() {
   // ajusta a escala para o fator de calibracao
   escala.set_scale(FATOR_CALIBRACAO); 
 
-  // client.connect(server, 80); 
-  // client.println("Configurações Encerrada, Iniciando Leituras\r"); 
+  client.connect(server, 80); 
+  client.println("Configurações Encerrada, Iniciando Leituras\r"); 
   Serial.println("Configurações Encerrada, Iniciando Leituras"); 
 
 }
 //====================================================================================
+
 void loop() {
   digitalWrite(LedBoard, LOW);  
   if (escala.is_ready()) {
                     
-      peso = (escala.get_units()) * 9,8;
-      tele = String((millis() / 1000.0),3) + "," + String(peso, 3) + '\r';
-      Serial.print(tele);
-      Serial.println("N");
-      // writeOnSD(tele);                
-      // client.connect(server, 80); 
-      // client.println(tele);   
-      delay(80);
+    peso = (escala.get_units()) * 9.8;
+    tele = String((millis() / 1000.0),3) + "," + String(peso, 3) + '\r';
+    Serial.print(tele);
+    Serial.println("N");
+
+    if(SD_ENABLE) {
+      // Escreve no cartão SD
+      writeOnSD(tele);
+    }                
+    client.connect(server, 80); 
+    client.println(tele);
+
+    // HX711 Requer que cada leitura seja realizado a no minimo a cada 100ms
+    // 120ms é o ideal para não ocorrer travamentos durante as leituras sem cartão SD
+    // No caso da utilização do cartão sd verificar a quanto tempo está realizando as leituras
+    // E inserir um delay para que as leituras fiquem acima de 100ms 
+    delay(120);
       
-    } else {
-      // client.connect(server, 80); 
-      // client.println("Erro de Leitura, Aguarde  . . . \r"); 
-      Serial.println("Erro de Leitura, Aguarde  . . . ");
+  } else {
+    client.connect(server, 80); 
+    client.println("Erro de Leitura, Aguarde  . . . \r"); 
+    Serial.println("Erro de Leitura, Aguarde  . . . ");
   }   
   digitalWrite(LedBoard, HIGH);         
 }
