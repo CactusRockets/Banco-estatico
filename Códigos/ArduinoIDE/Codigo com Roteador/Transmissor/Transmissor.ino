@@ -184,7 +184,7 @@ void loop() {
     // 120ms é o ideal para não ocorrer travamentos durante as leituras sem cartão SD
     // No caso da utilização do cartão sd verificar a quanto tempo está realizando as leituras
     // E inserir um delay para que as leituras fiquem acima de 100ms 
-    delay(120);
+    delay(30);
       
   } else {
     client.connect(server, 80); 
