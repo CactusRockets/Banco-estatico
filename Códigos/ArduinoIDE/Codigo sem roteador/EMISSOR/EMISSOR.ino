@@ -42,8 +42,8 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus)
 //------------------------------------------------------------------------------------
 #define       LedBoard   2                           // WIFI Module LED
 #define       BUTTON     0                           // NodeMCU Button
-#define       DT         D1                         //DT HX711
-#define       SCK        D2                          //SCK HX711
+#define       DT         D1                          // DT HX711
+#define       SCK        D2                          // SCK HX711
 
 //------------------------------------------------------------------------------------
 //Declarando Variaveis
@@ -70,7 +70,7 @@ void sdini() {
   Serial.println("Inicializando o cartão SD...");
   // verifica se o cartão SD está presente e se pode ser inicializado
   //if (!SD.begin(8)) {                                            //Arduino CS Pino 8
-  if (!SD.begin(D4)) {                                             //ESP GPIO02 D4
+  if (!SD.begin(D21)) {                                             //ESP GPIO02 D4
     Serial.println("Falha, verifique se o cartão está presente."); //programa encerrado
     while (1);                                                     //Continua verificando se SD foi conectado
     //return;                                                      //Verifica uma vez e continua o codigo
@@ -113,7 +113,7 @@ void writeOnSD(float time, float empuxo) {
 void setup()
 {
   Serial.begin(115200);
-  sdini();
+  // sdini();
   
   escala.begin (DT, SCK); //inicializacao e definicao dos pinos DT e SCK dentro do objeto ESCALA
   escala.tare(); //zera a escala
