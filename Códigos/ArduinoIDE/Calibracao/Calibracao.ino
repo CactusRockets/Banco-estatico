@@ -1,9 +1,10 @@
-#include <HX711.h>                  // Biblioteca para Leitura da Celula de Carga
+// Biblioteca para Leitura da Celula de Carga
+#include <HX711.h>
 
 //------------------------------------------------------------------------------------
 // Definindo pinos I/O 
 //------------------------------------------------------------------------------------
-#define       LedBoard     17      // WIFI Module LED
+#define       LedBoard     12      // WIFI Module LED
 #define       DT           15      // DT HX711
 #define       SCK          2       // SCK HX711
 
@@ -115,53 +116,53 @@ void loop() {
   digitalWrite(LedBoard, LOW);
   
   if (escala.is_ready()) {
-      peso = (escala.get_units()) * 9.8;
-      informations = String(peso_conhecido) + "N" + "," + String(peso, 3) + "N" + "," + String(FATOR_CALIBRACAO);
-      Serial.println(informations);
-      if(USE_STORAGE) {
-        writeOnSD(informations);
-      }
+    peso = (escala.get_units()) * 9.8;
+    informations = String(peso_conhecido) + "N" + "," + String(peso, 3) + "N" + "," + String(FATOR_CALIBRACAO);
+    Serial.println(informations);
+    if(USE_STORAGE) {
+      writeOnSD(informations);
+    }
 
-      // // Reajuste na calibração
-      // if((peso - peso_conhecido) > Diferenca_maxima) {
-      //   FATOR_CALIBRACAO += Reajuste_maximo;
-        
-      // } else if((peso - peso_conhecido) > Diferenca_media) {
-      //   FATOR_CALIBRACAO += Reajuste_medio;
-        
-      // }  else if((peso - peso_conhecido) > Diferenca_minima) {
-      //   FATOR_CALIBRACAO += Reajuste_minimo;
+    // Reajuste na calibração
+    if((peso - peso_conhecido) > Diferenca_maxima) {
+      FATOR_CALIBRACAO += Reajuste_maximo;
+      
+    } else if((peso - peso_conhecido) > Diferenca_media) {
+      FATOR_CALIBRACAO += Reajuste_medio;
+      
+    }  else if((peso - peso_conhecido) > Diferenca_minima) {
+      FATOR_CALIBRACAO += Reajuste_minimo;
 
 
 
-      // } else if((peso - peso_conhecido) < -Diferenca_maxima) {
-      //   FATOR_CALIBRACAO -= Reajuste_maximo;
-        
-      // } else if((peso - peso_conhecido) < -Diferenca_media) {
-      //   FATOR_CALIBRACAO -= Reajuste_medio;
-        
-      // } else if((peso - peso_conhecido) < -Diferenca_minima) {
-      //   FATOR_CALIBRACAO -= Reajuste_minimo;
-        
-        
-      // } else {
-      //   while(1) {
-      //     Serial.println("Fator de calibração ideal:" + String(FATOR_CALIBRACAO));
-      //     delay(500);
-      //   }
-      // }
-
-      // escala.set_scale(FATOR_CALIBRACAO);
-        
-
-      // HX711 Requer que cada leitura seja realizado a no minimo a cada 100ms
-      // 120ms é o ideal para não ocorrer travamentos durante as leituras sem cartão SD
-      // No caso da utilização do cartão sd verificar a quanto tempo está realizando as leituras
-      // E inserir um delay para que as leituras fiquem acima de 100ms 
-      delay(120);
+    } else if((peso - peso_conhecido) < -Diferenca_maxima) {
+      FATOR_CALIBRACAO -= Reajuste_maximo;
+      
+    } else if((peso - peso_conhecido) < -Diferenca_media) {
+      FATOR_CALIBRACAO -= Reajuste_medio;
+      
+    } else if((peso - peso_conhecido) < -Diferenca_minima) {
+      FATOR_CALIBRACAO -= Reajuste_minimo;
+      
       
     } else {
-      Serial.println("Erro de Leitura");
-    }   
-    digitalWrite(LedBoard, HIGH);         
+      while(1) {
+        Serial.println("Fator de calibração ideal:" + String(FATOR_CALIBRACAO));
+        delay(500);
+      }
+    }
+
+    escala.set_scale(FATOR_CALIBRACAO);
+      
+
+    // HX711 Requer que cada leitura seja realizado a no minimo a cada 100ms
+    // 120ms é o ideal para não ocorrer travamentos durante as leituras sem cartão SD
+    // No caso da utilização do cartão sd verificar a quanto tempo está realizando as leituras
+    // E inserir um delay para que as leituras fiquem acima de 100ms 
+    delay(120);
+    
+  } else {
+    Serial.println("Erro de Leitura");
+  }   
+  digitalWrite(LedBoard, HIGH);         
 }

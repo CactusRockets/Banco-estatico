@@ -19,7 +19,6 @@
 #define       SCK          2       // SCK HX711
 #define       CS_SDPIN     4       // CS Cartão SD
 
-#define massa_conhecida 18.5
 #define FATOR_CALIBRACAO -50000
 
 #define USE_STORAGE true
@@ -194,7 +193,7 @@ void loop() {
   if (escala.is_ready()) {
     force = (escala.get_units()) * 9.8;
     timeMillis = millis();
-    informations = String(timeMillis) + "s" + "," + String(force, 3) + "N" + "," + String(FATOR_CALIBRACAO);
+    informations = String(timeMillis) + "," + String(force, 3) + "," + String(FATOR_CALIBRACAO);
 
     Serial.println(informations);
     if(USE_STORAGE) {

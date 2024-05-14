@@ -1,7 +1,7 @@
-#include <SPI.h>                           // Biblioteca de comunicação SPI Nativa
-#include <ESP8266WiFi.h>                   // The Basic Function Of The ESP NODEMCU
-#include <SD.h>                            // Biblioteca de comunicação com cartão SD Nativa
-#include <HX711.h>                         // Biblioteca para Leitura da Celula de Carga
+#include <SPI.h>             // Biblioteca de comunicação SPI Nativa
+#include <ESP8266WiFi.h>     // The Basic Function Of The ESP NODEMCU
+#include <SD.h>              // Biblioteca de comunicação com cartão SD Nativa
+#include <HX711.h>           // Biblioteca para Leitura da Celula de Carga
 #include <Wire.h>
 
 //------------------------------------------------------------------------------------
@@ -11,7 +11,8 @@
 #define       DT           D1       // DT HX711
 #define       SCK          D2       // SCK HX711
 
-#define SD_ENABLE true
+#define USE_STORAGE true
+#define CS_SDPIN D4
 
 //------------------------------------------------------------------------------------
 // Declarando Variaveis
@@ -24,18 +25,9 @@ String tele;
 //------------------------------------------------------------------------------------
 // Variaveis de Autenticação do Wifi
 //------------------------------------------------------------------------------------
-/*
-char ssid[] = "Sett";                  // SSID 
-char pass[] = "Scts2019LoL";           // Senha
-*/
 
 char ssid[] = "teste";                 // SSID 
 char pass[] = "testesestatico";        // Senha
-
-/*
-char ssid[] = "LabCCOMP";              // SSID 
-char pass[] = "#labccomp#";            // Senha
-*/
 
 //------------------------------------------------------------------------------------
 // Variaveis de Autenticação do Wifi
@@ -46,55 +38,64 @@ WiFiClient client;
 
 //------------------------------------------------------------------------------------
 
-// declaracao do objeto ESCALA na classe HX711 da biblioteca
+// Declaracao do objeto ESCALA na classe HX711 da biblioteca
 HX711 escala;
 
-// esse valor deve ser alterado para o valor de calibracao obtido com o outro codigo
-const int FATOR_CALIBRACAO = 23500;
+// Esse valor deve ser alterado para o valor de calibracao obtido com o outro codigo
+#define FATOR_CALIBRACAO 23500
+
+void successInfo() {
+  digitalWrite(LedBoard, HIGH);
+}
+
+void errorInfo() {
+  digitalWrite(LedBoard, HIGH);
+  delay(250);
+  digitalWrite(LedBoard, LOW);
+  delay(250);
+}
 
 
 //====================================================================================
-void sdini() {
-  Serial.print("Inicializando o cartão SD...");
-  // verifica se o cartão SD está presente e se pode ser inicializado
 
-  // ESP GPIO02 D4
-  if (!SD.begin(D4)) {
-    // programa encerrado 
+void setupSd() {
+  Serial.println("Inicializando o cartão SD...");
+  // Verifica se o cartão SD está presente e se pode ser inicializado
+  
+  while(!SD.begin(CS_SDPIN)) {
     Serial.println("Falha, verifique se o cartão está presente.");
     client.connect(server, 80); 
-    client.println("Falha, verifique se o cartão está presente \r");
-    return;                                                      
+    client.println("Falha, verifique se o cartão está presente.\r");
+    while(1) {
+      errorInfo();
+    }
   }
 
   // Cria arquivo data.txt e abre
-  myFile = SD.open("data.txt", FILE_WRITE);                        
+  myFile = SD.open("/data.txt", FILE_APPEND);
   // Escreve dados no arquivo
   if (myFile) {
-    Serial.print("Gravando...");
-    client.connect(server, 80); 
-    client.println("Gravando...\r"); 
+    successInfo();
 
-    myFile.println("Tempo, Empuxo");
+    Serial.println("Gravando dados iniciais!");
+    client.connect(server, 80); 
+    client.println("Gravando dados iniciais!\r");
+
+    myFile.println("Tempo, Força, Fator de calibração");
     myFile.close();
 
   } else {
     Serial.println("Error ao abrir data.txt");
     client.connect(server, 80); 
-    client.println("Error ao abrir data.txt\r"); 
+    client.println("Error ao abrir data.txt\r");
   }
 }
-//====================================================================================
-
-//------------------------------------------------------------------------------------
-// Grava dados em formato de string
-//------------------------------------------------------------------------------------
 
 void writeOnSD(String str) {
-  myFile = SD.open("data.txt", FILE_WRITE);
+  myFile = SD.open("/data.txt", FILE_APPEND);
 
   if (myFile) {
-    Serial.println("(OK)");
+    Serial.println("(Dados Gravados!)");
     myFile.println(str);
     myFile.close();
 
@@ -104,7 +105,9 @@ void writeOnSD(String str) {
     client.println("Error ao gravar em data.txt\r"); 
   }
 }
+
 //====================================================================================
+
 void setup() {
   pinMode(LedBoard, OUTPUT);  
   digitalWrite(LedBoard, HIGH);              
@@ -112,7 +115,7 @@ void setup() {
   Serial.println(".");
   Serial.println("Modulo Incializado");
 
-  // connects to the WiFi router
+  // Connects to the WiFi router
   WiFi.begin(ssid, pass);
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
@@ -140,21 +143,19 @@ void setup() {
   client.println("Modulo de Leitura Conectado\r");
   client.connect(server, 80); 
 
-  if(SD_ENABLE) {
-    client.println("Inicializando cartao SD\r"); 
-    // Configura cartão SD
-    sdini();
+  if(USE_STORAGE) {
+    setupSd();
   }
 
   client.connect(server, 80); 
   client.println("Inicializando e calibrando Celula de carga\r"); 
   Serial.println("Inicializando e calibrando Celula de carga");  
 
-  // inicializacao e definicao dos pinos DT e SCK dentro do objeto ESCALA
+  // Inicializacao e definicao dos pinos DT e SCK dentro do objeto ESCALA
   escala.begin (DT, SCK);
   // Tara a balança
   escala.tare();
-  // ajusta a escala para o fator de calibracao
+  // Ajusta a escala para o fator de calibracao
   escala.set_scale(FATOR_CALIBRACAO); 
 
   client.connect(server, 80); 
@@ -162,6 +163,7 @@ void setup() {
   Serial.println("Configurações Encerrada, Iniciando Leituras"); 
 
 }
+
 //====================================================================================
 
 void loop() {
@@ -173,7 +175,7 @@ void loop() {
     Serial.print(tele);
     Serial.println("N");
 
-    if(SD_ENABLE) {
+    if(USE_STORAGE) {
       // Escreve no cartão SD
       writeOnSD(tele);
     }                
@@ -184,12 +186,12 @@ void loop() {
     // 120ms é o ideal para não ocorrer travamentos durante as leituras sem cartão SD
     // No caso da utilização do cartão sd verificar a quanto tempo está realizando as leituras
     // E inserir um delay para que as leituras fiquem acima de 100ms 
-    delay(30);
+    delay(120);
       
   } else {
     client.connect(server, 80); 
-    client.println("Erro de Leitura, Aguarde  . . . \r"); 
-    Serial.println("Erro de Leitura, Aguarde  . . . ");
+    client.println("Erro de Leitura, Aguarde...\r"); 
+    Serial.println("Erro de Leitura, Aguarde...");
   }   
   digitalWrite(LedBoard, HIGH);         
 }
